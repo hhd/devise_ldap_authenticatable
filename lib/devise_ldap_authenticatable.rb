@@ -17,6 +17,10 @@ module Devise
   # Domain
   mattr_accessor :ldap_domain
   @@ldap_domain = nil
+
+  # Timeout (seconds)
+  mattr_accessor :ldap_timeout
+  @@ldap_timeout = 5
   
   # Use SSL
   mattr_accessor :ldap_ssl
