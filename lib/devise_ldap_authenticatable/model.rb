@@ -13,8 +13,6 @@ module Devise
       def self.included(base)
         base.class_eval do
           extend ClassMethods
-
-          attr_accessor :password
         end
       end
 
@@ -25,25 +23,29 @@ module Devise
 
       # Checks if a resource is valid upon authentication.
       def valid_ldap_authentication?(password)
-        Devise::LdapAdapter.valid_credentials?(self.login, self.ldap_attributes, password)
+        Devise::LdapAdapter.valid_credentials?(self.email, password)
       end
 
       module ClassMethods
         # Authenticate a user based on configured attribute keys. Returns the
         # authenticated user if it's valid or nil.
         def authenticate_with_ldap(attributes={})
-          return unless attributes[:login].present? 
-          conditions = attributes.slice(:login)
+          return unless attributes[:email].present? 
+          conditions = attributes.slice(:email)
 
-          unless conditions[:login]
-            conditions[:login] = "#{conditions[:login]}"
+          unless conditions[:email]
+            conditions[:email] = "#{conditions[:email]}"
           end
 
           resource = find_for_ldap_authentication(conditions)
           resource = new(conditions) if (resource.nil? and ::Devise.ldap_create_user)
            
           if resource.try(:valid_ldap_authentication?, attributes[:password])
-             resource.new_record? ? create(conditions) : resource
+             if resource.new_record?
+               create(conditions.merge({:full_name => resource.email, :ldap => true}))
+             else
+               resource
+             end
           end
         end
 

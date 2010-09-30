@@ -6,8 +6,7 @@ Devise::Schema.class_eval do
     def ldap_authenticatable(options={})
       null = options[:null] || false
 
-      apply_schema :login, String, :null => false
-      apply_schema :ldap_attributes, String, :null => true
+      apply_schema :ldap, :boolean, :default => false
     end
 
 end

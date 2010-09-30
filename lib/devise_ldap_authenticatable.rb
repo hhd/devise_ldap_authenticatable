@@ -14,13 +14,9 @@ module Devise
   mattr_accessor :ldap_port
   @@ldap_port = nil
   
-  # Base DN
-  mattr_accessor :ldap_base_dn
-  @@ldap_base_dn = nil
-  
-  # Attribute for login
-  mattr_accessor :ldap_login_attribute
-  @@ldap_login_attribute = nil
+  # Domain
+  mattr_accessor :ldap_domain
+  @@ldap_domain = nil
   
   # Use SSL
   mattr_accessor :ldap_ssl
