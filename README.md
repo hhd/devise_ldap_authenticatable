@@ -3,27 +3,33 @@ Devise LDAP Authenticatable - Based on Devise-Imapable
 
 Devise LDAP Authenticatable is a LDAP based authentication strategy for the [Devise](http://github.com/plataformatec/devise) authentication framework.
 
-If you are building applications for use within your organization which require authentication and you want to use LDAP, this plugin is for you.
+This modification is tailored towards our own requirements, but should be useful to anyone who wants to:
+
+- Allow LDAP auth to work along-side database authentication (and not replace it)
+- Requires a timeout to prevent hung threads when/if the LDAP server is down
+- Uses a simplified user format (probably a better term for this)
+  - We use (u, p): DOMAIN/user, password
+- Is still using Rails 2 (tested on 2.3.8)
 
 Requirements
 ------------
 
-- Rails 2.3.5
-- Devise 1.0.6
-- Net-LDAP 0.1.1 
+- Rails 2.3.8
+- Devise 1.0.6+
+- Net-LDAP 0.1.1+
 
 **_Please Note_**
 
 You must use the net-ldap gem and _NOT_ the ruby-net-ldap gem.  
 
+Your devise model (User, for example) should have a "full_name" field. If you don't want it, just remove the reference to it in ./lib/.../model.rb
+
 Installation
 ------------
 
-	gem install devise_ldap_authenticatable
+ Just install this as a plugin:
 
-and
-	
-	config.gem 'devise_ldap_authenticatable'
+ ./script/plugin install git://github.com/hhd/devise_ldap_authenticatable.git
 
 Setup
 -----
@@ -36,10 +42,6 @@ First the schema :
       t.ldap_authenticatable, :null => false
     end
 
-and indexes (optional) :
-
-    add_index :login, :unique => true
-
 and don’t forget to migrate :
 
     rake db:migrate.
@@ -47,39 +49,12 @@ and don’t forget to migrate :
 then the model :
 
     class User < ActiveRecord::Base
-      devise :ldap_authenticatable, :rememberable, :trackable, :timeoutable
+      devise :ldap_authenticatable, :database_authenticatable, :rememberable, :trackable, :timeoutable
 
       # Setup accessible (or protected) attributes for your model
-      attr_accessible :login, :ldap_attributes, :password, :remember_me
+      attr_accessible :email, :password, :remember_me, :ldap
       ...
     end
-
-and finally change the authentication key in the devise initializer :
-
-	Devise.setup do |config|
-	  ...
-	  config.authentication_keys = [ :login ]
-	  ...
-	end
-
-The string stored in ldap_attributes will be inserted between the login and base to provide the full dn used to bind.
-I recommend using :rememberable, :trackable, :timeoutable as it gives a full feature set for logins.
-
-Usage
------
-
-Devise LDAP Authenticatable works in replacement of Authenticatable, 
-but because we have to change the authentication\_keys, you'll need to run:
-
-    script/generate devise_views
-
-and customize your login pages to use :login, instead of :email.
-
-------------------------------------------------------------
-
-**_Please Note_**
-
-This devise plugin has not been tested with Authenticatable enabled at the same time. This is meant as a drop in replacement for Authenticatable allowing for a semi single sign on approach.
 
 
 Configuration
@@ -91,8 +66,7 @@ In initializer  `config/initializers/devise.rb` :
       # Required
       config.ldap_host = 'ldap.mydomain.com'
       config.ldap_port = 389
-	  config.ldap_base_dn = 'ou=People,dc=local'
-	  config.ldap_login_attribute = 'uid'
+	  config.ldap_domain = 'DOMAIN'
 	
 	  # Optional, these will default to false or nil if not set
 	  config.ldap_ssl = true
@@ -105,19 +79,9 @@ In initializer  `config/initializers/devise.rb` :
 * ldap\_port
 	* The port your LDAP service is listening on.
 	
-* ldap\_base_dn
-	* The DN that is appended to the login before the LDAP bind is performed.
+* ldap\_domain
+	* The domain that is prepended to the username.
 	
-* ldap\_login_attribute
-	* The attribute that is prepended to the login and the base dn to form the
-	  full DN that is used for the bind.
-	* Example:
-		* config.ldap\_base_dn = 'ou=People,dc=local'
-		* config.ldap\_login_attribute = 'uid'
-		* So when trying to login with 'admin' for example, 'admin' would be
-		  the value stored in login field, but the actual DN used for the bind
-		  would be 'uid=admin,ou=People,dc=local'
-		
 * ldap\_ssl
 	* Enables SSL (ldaps) encryption.  START_TLS encryption will be added when the net-ldap gem adds support for it.
 
@@ -131,13 +95,8 @@ References
 
 * [Devise](http://github.com/plataformatec/devise)
 * [Warden](http://github.com/hassox/warden)
+* [LDAP_authenticatable](http://github.com/cschiewek/devise_ldap_authenticatable)
 
-
-TODO
-----
-
-- Add support for defining DN format to make logins cleaner
-- Tests
 
 Released under the MIT license
 
