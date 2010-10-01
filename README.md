@@ -89,6 +89,9 @@ In initializer  `config/initializers/devise.rb` :
 	* If set to true, all valid LDAP users will be allowed to login and an appropriate user record will be created.
       If set to false, you will have to create the user record before they will be allowed to login.
 
+      NOTE: A boolean field, 'ldap', will be set to true for all devise records created in this way. This way you can
+            discern between database and LDAP users in other parts of your app.
+
 
 References
 ----------
