@@ -11,6 +11,7 @@ This modification is tailored towards our own requirements, but should be useful
   - We use (u, p): DOMAIN/user, password
 - Is still using Rails 2 (tested on 2.3.8)
 
+
 Requirements
 ------------
 
@@ -39,20 +40,33 @@ Once devise\_ldap\_authenticatable is installed, all you need to do is setup the
 First the schema :
 
     create_table :users do |t|
-      t.ldap_authenticatable, :null => false
+      t.database_authenticatable
+      t.ldap_authenticatable
+      t.recoverable
+      t.rememberable
+      t.lockable
+
+      t.string :full_name
+
+      t.timestamps
     end
 
 and don’t forget to migrate :
 
     rake db:migrate.
 
-then the model :
+then the model (validations, etc are optional):
 
     class User < ActiveRecord::Base
       devise :ldap_authenticatable, :database_authenticatable, :rememberable, :trackable, :timeoutable
 
+      validates_presence_of :full_name
+
+      # Validate the password only if it's not an LDAP user (no password stored for those).
+      validates_length_of :password, :within => 8..18, :unless => lambda { |u| u.ldap == true }
+
       # Setup accessible (or protected) attributes for your model
-      attr_accessible :email, :password, :remember_me, :ldap
+      attr_accessible :full_name, :email, :password, :password_confirmation, :remember_me, :ldap
       ...
     end
 
